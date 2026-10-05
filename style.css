@@ -1,0 +1,182 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    color: #333;
+    text-align: center;
+}
+
+header {
+    background: #252c46;
+    color: white;
+    padding: 40px 20px;
+}
+
+header h1 {
+    margin-bottom: 10px;
+}
+
+main h2 {
+    margin-bottom: 20px;
+}
+
+main p {
+    margin-bottom: 25px;
+}
+
+footer {
+    margin-top: 160px;
+    padding: 20px;
+    color: #fafafa;
+    background-color:#252c46;
+    font-weight: bold;
+}
+
+
+/* ===== LAYOUT DE TARJETAS ===== */
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;   /* cada tarjeta toma Sualtura, no se estiran entre sí */
+    flex-wrap: wrap;
+    gap: 30px;
+    margin: 90px auto 0;
+    padding: 0 20px;
+}
+
+.tarjeta {
+    background: white;
+    width: 300px;
+    padding: 70px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 5px #252c46;
+}
+
+.tarjeta1 {
+    background: white;
+    flex: 1 1 500px;
+    max-width: 700px;
+    padding: 30px;
+    margin-left: 90px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 5px #252c46;
+}
+
+.logo {
+    width: 190px;
+    height: auto;
+}
+
+
+/* ===== BOTONES ===== */
+
+button {
+    background: #252c46;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+button:hover {
+    background: #3b456b;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* ===== CHAT ===== */
+
+#chat {
+    height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.mensaje-chat {
+    display: flex;
+}
+
+.mensaje-chat.usuario {
+    justify-content: flex-end;   /* lo que escribes, a la derecha */
+}
+
+.mensaje-chat.alex {
+    justify-content: flex-start; /* respuestas de Alex, a la izquierda */
+}
+
+.burbuja {
+    max-width: 75%;
+    padding: 8px 12px;
+    border-radius: 14px;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+.usuario .burbuja {
+    background: #0b93f6;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.alex .burbuja {
+    background: #e5e5ea;
+    color: #000;
+    border-bottom-left-radius: 4px;
+}
+
+.burbuja p {
+    margin: 0;
+}
+
+.hora {
+    display: block;
+    font-size: 11px;
+    opacity: 0.7;
+    text-align: right;
+    margin-top: 4px;
+}
+
+.pensando .burbuja {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+
+/* ===== ZONA DE ESCRITURA ===== */
+
+.zona-escritura {
+    display: flex;
+    align-items: center;   /* input y botón alineados verticalmente */
+    gap: 8px;
+    padding: 10px;
+}
+
+.zona-escritura input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    margin: 0;             /* sin márgenes que desalineen el botón */
+}
+
+#enviar {
+    flex: none;            /* el botón no crece ni se estira */
+}

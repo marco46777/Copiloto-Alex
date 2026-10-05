@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudiantes en notas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6fa; color: #1f2937; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  h1 { margin: 0 0 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .kpi small { color: #64748b; }
+  .kpi div { font-size: 30px; font-weight: 700; margin-top: 4px; }
+  .graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .grafico { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .fuentes { margin-top: 20px; font-size: 13px; color: #64748b; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="titulo"></h1>
+  <div class="kpis" id="kpis"></div>
+  <div class="graficos" id="graficos"></div>
+  <div class="fuentes" id="fuentes"></div>
+</main>
+<script>
+const D = {"titulo":"Estudiantes en notas","kpis":[{"etiqueta":"Total estudiantes","valor":1500},{"etiqueta":"Notas promedio","valor":8.5},{"etiqueta":"Estudiantes con notas de 9 o más","valor":200},{"etiqueta":"Estudiantes con notas de 5 o menos","valor":50}],"graficos":[{"tipo":"bar","titulo":"Notas por materia","etiquetas":["Matemáticas","Lengua","Ciencias","Arte","Geografía"],"valores":[9,8,7,6,5]}],"fuentes":[]};
+const COLORES = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d'];
+
+document.getElementById('titulo').textContent = D.titulo;
+
+D.kpis.forEach(k => {
+  const el = document.createElement('div');
+  el.className = 'kpi';
+  const s = document.createElement('small'); s.textContent = k.etiqueta;
+  const v = document.createElement('div'); v.textContent = Number(k.valor).toLocaleString('es');
+  el.append(s, v);
+  document.getElementById('kpis').appendChild(el);
+});
+
+D.graficos.forEach(g => {
+  const caja = document.createElement('div');
+  caja.className = 'grafico';
+  const canvas = document.createElement('canvas');
+  caja.appendChild(canvas);
+  document.getElementById('graficos').appendChild(caja);
+  const esPie = g.tipo === 'pie';
+  new Chart(canvas, {
+    type: g.tipo,
+    data: {
+      labels: g.etiquetas,
+      datasets: [{
+        label: g.titulo,
+        data: g.valores,
+        backgroundColor: (esPie || g.tipo === 'bar') ? g.etiquetas.map((_, j) => COLORES[j % COLORES.length]) : 'rgba(37,99,235,.15)',
+        borderColor: g.tipo === 'line' ? '#2563eb' : undefined,
+        fill: g.tipo === 'line',
+        tension: 0.3
+      }]
+    },
+    options: { plugins: { title: { display: true, text: g.titulo }, legend: { display: esPie } } }
+  });
+});
+
+if (D.fuentes && D.fuentes.length) {
+  document.getElementById('fuentes').textContent = 'Fuentes: ' + D.fuentes.join(' | ');
+}
+</script>
+</body>
+</html>
