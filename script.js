@@ -285,3 +285,179 @@ mensaje.addEventListener("keydown", function (evento) {
         }
     }
 });
+/* ==================================================
+   VOZ DE ALEX: grave y ligeramente robótica
+   Pega este archivo COMPLETO al final de tu JS
+   (reemplaza los dos bloques anteriores: voz + saludo).
+================================================== */
+
+/* ---------- AJUSTES (cámbialos a tu gusto) ---------- */
+const AJUSTE_VOZ = {
+    tono: 0.55,        // 0.1 a 2. Más bajo = más grueso. Por debajo de 0.4 puede distorsionar
+    velocidad: 0.93,   // 1 es normal. Un poco más lento da un aire más "máquina"
+    volumen: 1,
+    largoMinimoFrase: 18   // las frases se dicen por tramos cortos, con pausas pequeñas (efecto robótico suave)
+};
+
+const vozAlex = {
+    voz: null,
+    activa: ("speechSynthesis" in window)
+};
+
+// Nombres de voces masculinas habituales en español (Edge, Chrome, Windows, Android, macOS)
+const REGEX_VOZ_MASCULINA =
+    /(pablo|ra[uú]l|jorge|diego|juan|carlos|miguel|enrique|andr[eé]s|[aá]lvaro|pedro|jaime|alberto|male|hombre|masculin)/i;
+
+function elegirVozAlex() {
+
+    if (!vozAlex.activa) return;
+
+    const voces = speechSynthesis.getVoices();
+    const enEspanol = voces.filter(v => /^es([-_]|$)/i.test(v.lang));
+
+    // Preferimos español latino y luego cualquier español
+    const latino = enEspanol.filter(v => /^es[-_](CO|MX|US|419|AR|CL|PE|VE)/i.test(v.lang));
+    const candidatas = latino.concat(enEspanol);
+
+    vozAlex.voz =
+        candidatas.find(v => REGEX_VOZ_MASCULINA.test(v.name)) ||
+        enEspanol[0] ||
+        null;
+}
+
+if (vozAlex.activa) {
+    elegirVozAlex();
+    // Las voces se cargan de forma asíncrona en varios navegadores
+    speechSynthesis.onvoiceschanged = elegirVozAlex;
+}
+
+/* Divide el texto en tramos cortos (por comas, puntos, etc.).
+   Cada tramo se dice por separado y deja una pausa breve entre ellos. */
+function trocearParaVoz(texto) {
+
+    const partes = texto.match(/[^.,;:!?]+[.,;:!?]*/g) || [texto];
+    const tramos = [];
+    let acumulado = "";
+
+    partes.forEach(function (parte) {
+        acumulado += (acumulado ? " " : "") + parte.trim();
+        if (acumulado.length >= AJUSTE_VOZ.largoMinimoFrase) {
+            tramos.push(acumulado);
+            acumulado = "";
+        }
+    });
+
+    if (acumulado) tramos.push(acumulado);
+
+    return tramos;
+}
+
+/* Dice un texto con la voz de Alex.
+   opciones.alEmpezar / opciones.alError se asocian al primer tramo. */
+function decirConVozAlex(texto, opciones) {
+
+    opciones = opciones || {};
+
+    trocearParaVoz(texto).forEach(function (tramo, indice) {
+
+        const locucion = new SpeechSynthesisUtterance(tramo);
+
+        if (vozAlex.voz) {
+            locucion.voice = vozAlex.voz;
+            locucion.lang = vozAlex.voz.lang;
+        } else {
+            locucion.lang = "es-CO";
+        }
+
+        locucion.pitch = AJUSTE_VOZ.tono;
+        locucion.rate = AJUSTE_VOZ.velocidad;
+        locucion.volume = AJUSTE_VOZ.volumen;
+
+        if (indice === 0) {
+            if (opciones.alEmpezar) locucion.onstart = opciones.alEmpezar;
+            if (opciones.alError) locucion.onerror = opciones.alError;
+        }
+
+        speechSynthesis.speak(locucion);
+    });
+}
+
+function hablar(textoCompleto) {
+
+    if (!vozAlex.activa) return;
+
+    // Limpiar lo que no se debe leer en voz alta: enlaces, emojis, símbolos de lista
+    const limpio = String(textoCompleto)
+        .replace(/https?:\/\/\S+/g, "el enlace")
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "")
+        .replace(/^\s*[-•*]\s+/gm, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (limpio === "") return;
+
+    speechSynthesis.cancel();   // corta lo anterior para no acumular voces
+    decirConVozAlex(limpio);
+}
+
+// Envolver escribirTexto: primero habla, luego ejecuta el efecto de escritura original
+const escribirTextoOriginal = escribirTexto;
+
+escribirTexto = async function (textoCompleto, velocidad = 25) {
+    hablar(textoCompleto);
+    // Escritura un poco más lenta para que el texto vaya al ritmo de la voz
+    return escribirTextoOriginal(textoCompleto, Math.max(velocidad, 45));
+};
+
+
+/* ==================================================
+   SALUDO INICIAL HABLADO
+   Lee el mismo texto que escribe la tarjeta 1 (contenidoInicial),
+   así que sirve aunque el PHP cambie el nombre.
+================================================== */
+
+(function () {
+
+    if (!vozAlex.activa) return;
+
+    const saludo = contenidoInicial
+        .replace(/\.,/g, ",")        // "bienvenido.," -> "bienvenido,"
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (saludo === "") return;
+
+    let yaHablo = false;
+    const eventos = ["pointerdown", "keydown", "touchstart"];
+
+    function decirSaludo() {
+
+        if (yaHablo) return;
+
+        decirConVozAlex(saludo, {
+            alEmpezar: function () { yaHablo = true; },
+            // Los navegadores bloquean la voz si el usuario aún no ha tocado la página.
+            // En ese caso esperamos la primera interacción y entonces lo decimos.
+            alError: function (e) {
+                if (e.error === "not-allowed") {
+                    speechSynthesis.cancel();
+                    esperarInteraccion();
+                }
+            }
+        });
+    }
+
+    function esperarInteraccion() {
+
+        function alInteractuar() {
+            eventos.forEach(ev => document.removeEventListener(ev, alInteractuar));
+            decirSaludo();
+        }
+
+        eventos.forEach(ev => document.addEventListener(ev, alInteractuar));
+    }
+
+    // Pequeña espera para que el navegador alcance a cargar la lista de voces
+    setTimeout(decirSaludo, 600);
+
+})();
